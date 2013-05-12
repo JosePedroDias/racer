@@ -49,7 +49,6 @@
     onResourcesReady = function() {
         console.log('resources ready');
 
-        var canvasEl = document.createElement('canvas');
         var screenD = [window.innerWidth, window.innerHeight];
         var zeroP = zeroV();
         var scrollP = [0, 0];
@@ -63,10 +62,34 @@
         scaleV(carP, 0.5);
         var canvasIsDirty = true;
 
-        canvasEl.setAttribute('width',  screenD[0]);
-        canvasEl.setAttribute('height', screenD[1]);
-        document.body.appendChild(canvasEl);
+        var canvasEl = createCanvas(screenD, document.body);
+
         var ctx = canvasEl.getContext('2d');
+
+        var hudD = [400, 50];
+        var hudEl = createCanvas(hudD);
+        var hCtx = hudEl.getContext('2d');
+
+        var RED   = '#F00';
+        var GREEN = '#0F0';
+        var BLUE  = '#00F';
+        var onHudRender = function() {
+            hCtx.fillStyle = RED;
+            rect(hCtx, zeroP, hudD, true);
+
+            // speed bar
+            hCtx.fillStyle = BLUE;
+            rect(hCtx, [50, 12.25], [carSpd * 0.25, 25], true);
+
+            // direction wheel
+            hCtx.lineWidth = 4;
+            hCtx.strokeStyle = GREEN;
+            circle(hCtx, [200, 25], 25-2, true);
+            //var t = 
+            //line([200, 25], t)
+            hCtx.lineWidth = 1;
+        };
+        onHudRender();
 
         var onKey = function(ev) {
             ev.preventDefault();
@@ -78,11 +101,14 @@
                 case 37:  carDR -= Math.PI / 8; break; // right
                 default:
                     return console.log(ev.keyCode);
-
-                carSpd = keepInLimit(carSpd, -200, 400);
-                var t = R360;
-                carDR = keepInLimit(carDR, -t, t);
             }
+
+            carSpd = keepInLimit(carSpd, -200, 400);
+            var t = R90;
+            carDR = keepInLimit(carDR, -t, t);
+
+            onHudRender();
+            //console.log('DR:', carDR, 'Spd:', carSpd);
         };
         document.addEventListener('keydown', onKey);
 
@@ -101,6 +127,8 @@
                 tT(ctx, t); //ctx.translate(t[0], t[1]);
                 blit(ctx, carS, zeroP);
             ctx.restore();
+
+            blit(ctx, hudEl, zeroP);
 
             //console.log('DR:', carDR, 'Spd:', carSpd);
             //console.log('R:', carR, 'P:', carP);

@@ -1,15 +1,15 @@
 // canvas useful abstractions
 
-var rect = function(ctx, p0, dims, fillSt) {
-    if (fillSt === undefined) {
+var _PI2 = Math.PI*2;
+
+var rect = function(ctx, p0, dims, fill) {
+    if (!fill) {
         return ctx.clearRect(p0[0], p0[1], dims[0], dims[1]);
     }
-    ctx.fillStyle = fillSt;
     ctx.fillRect(p0[0], p0[1], dims[0], dims[1]);
 };
 
-var line = function(ctx, p0, p1, stkSt, lWidth) {
-    ctx.strokeStyle = stkSt || '#000';
+var line = function(ctx, p0, p1) {
     ctx.lineWidth = lWidth || 1;
     ctx.beginPath();
     ctx.moveTo(p0[0], p0[1]);
@@ -17,16 +17,17 @@ var line = function(ctx, p0, p1, stkSt, lWidth) {
     ctx.stroke();
 };
 
-var circle = function(ctx, p0, r, fillSt) {
-    ctx.fillStyle = fillSt;
+var circle = function(ctx, p0, r, hollow) {
     ctx.beginPath();
-    ctx.arc(p0[0], p0[1], r, 0, PI2);
-    ctx.fill();
+    ctx.arc(p0[0], p0[1], r, 0, _PI2);
+    if (hollow) { ctx.stroke(); }
+    else {        ctx.fill();   }
 };
 
-var text = function(ctx, pos, txt, sz, fillSt) {
-    ctx.font = Math.round(sz) + 'px sans-serif';
-    ctx.fillStyle = fillSt || '#000';
+var text = function(ctx, pos, txt, sz) {
+    if (sz) {
+        ctx.font = Math.round(sz) + 'px sans-serif';
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(txt, pos[0], pos[1]);
@@ -45,6 +46,16 @@ var blit = function(ctx, srcImg, a, b, c, d) {
     if (!d) {      ctx.drawImage(srcImg, c[0], c[1]); }
     else if (!a) { ctx.drawImage(srcImg, c[0], c[1], d[0], d[1]); }
     else {         ctx.drawImage(srcImg, a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1]); }
+};
+
+var createCanvas = function(dims, parentEl) {
+    var el = document.createElement('canvas');
+    el.setAttribute('width',  dims[0]);
+    el.setAttribute('height', dims[1]);
+    if (parentEl) {
+        parentEl.appendChild(el);
+    }
+    return el;
 };
 
 var imgDims = function(imgEl, v) { // to 2nd
