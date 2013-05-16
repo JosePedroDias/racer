@@ -16,6 +16,8 @@
 
     var onResourcesReady;
 
+    var keysDown = {};
+
 
 
     var loadSprites = function() {
@@ -39,7 +41,7 @@
             imgEl = new Image();
             imgEl.onload = onImgLoaded.bind(imgEl, name);
             imgEl.src = imgUri;
-        };
+        }
     };
 
     loadSprites();
@@ -50,44 +52,40 @@
         console.log('resources ready');
 
         var screenD = [window.innerWidth, window.innerHeight];
-        var zeroP = zeroV();
+        var zeroP = v.zero();
         var scrollP = [0, 0];
         var carS = sprites.peugeot;
-        var carD = imgDims(carS);
-        var carP = copyV(screenD);
-        var carDP = zeroV();
+        var carD = v.imgDims(carS);
+        var carP = v.copy(screenD);
+        var carDP = v.zero();
         var carR = 0;
         var carDR = 0; // 90deg / s
         var carSpd = 0;
-        scaleV(carP, 0.5);
+        v.scale(carP, 0.5);
         var canvasIsDirty = true;
 
-        var canvasEl = createCanvas(screenD, document.body);
-
-        var ctx = canvasEl.getContext('2d');
+        var c = cvs(screenD, document.body);
 
         var hudD = [400, 50];
-        var hudEl = createCanvas(hudD);
-        var hCtx = hudEl.getContext('2d');
+        var h = cvs(hudD);
 
         var RED   = '#F00';
         var GREEN = '#0F0';
         var BLUE  = '#00F';
         var onHudRender = function() {
-            hCtx.fillStyle = RED;
-            rect(hCtx, zeroP, hudD, true);
+            h.c.fillStyle = RED;
+            h.rect(zeroP, hudD, true);
 
             // speed bar
-            hCtx.fillStyle = BLUE;
-            rect(hCtx, [50, 12.25], [carSpd * 0.25, 25], true);
+            h.c.fillStyle = BLUE;
+            h.rect([50, 12.25], [carSpd * 0.25, 25], true);
 
             // direction wheel
-            hCtx.lineWidth = 4;
-            hCtx.strokeStyle = GREEN;
-            circle(hCtx, [200, 25], 25-2, true);
-            //var t = 
-            //line([200, 25], t)
-            hCtx.lineWidth = 1;
+            h.c.lineWidth = 4;
+            h.c.strokeStyle = GREEN;
+            h.circle([200, 25], 25-2, true);
+            // TODO
+            h.c.lineWidth = 1;
         };
         onHudRender();
 
@@ -100,47 +98,39 @@
                 case 39:  carDR += Math.PI / 8; break; // left
                 case 37:  carDR -= Math.PI / 8; break; // right
                 default:
-                    return console.log(ev.keyCode);
+                    //return console.log(ev.keyCode);
             }
 
-            carSpd = keepInLimit(carSpd, -200, 400);
+            carSpd = v.inLimit(carSpd, -200, 400);
             var t = R90;
-            carDR = keepInLimit(carDR, -t, t);
+            carDR = v.inLimit(carDR, -t, t);
 
             onHudRender();
             //console.log('DR:', carDR, 'Spd:', carSpd);
         };
         document.addEventListener('keydown', onKey);
 
-        var t = zeroV();
+        var t = v.zero();
         var lastT = -1 / 60;
         var onRender = function(T) {
             T /= 1000;
             var DT = T - lastT;
-            
-            rect(ctx, zeroP, screenD);
 
-            ctx.save();
-                scaleV(carD, -0.5, t);
-                tT(ctx, carP); //ctx.translate(carP[0], carP[1]);
-                ctx.rotate(carR + R90);
-                tT(ctx, t); //ctx.translate(t[0], t[1]);
-                blit(ctx, carS, zeroP);
-            ctx.restore();
+            c.rect(zeroP, screenD);
 
-            blit(ctx, hudEl, zeroP);
+            c.drawSprite(carS, carD, carP, carR + R90);
 
-            //console.log('DR:', carDR, 'Spd:', carSpd);
-            //console.log('R:', carR, 'P:', carP);
-            
+            c.blit(h.e, zeroP);
+
             if (carDR !== 0) {
                 carR += carDR * DT * carSpd*0.01;
+                //console.log('R:', carR);
             }
 
             if (carSpd !== 0) {
-                moveV(carP, carR, carSpd * DT);
-
-                keepInLimitWrapV(carP, zeroP, screenD);
+                v.move(carP, carR, carSpd * DT);
+                v.inLimitWrap(carP, zeroP, screenD);
+                //console.log('P:', carP);
             }
 
             lastT = T;
@@ -149,6 +139,5 @@
 
         raf(onRender);
     };
-
 
 })();
