@@ -84,7 +84,7 @@
             h.c.lineWidth = 4;
             h.c.strokeStyle = '#666';
             h.circle([200, 25], 25-2, true);
-            
+
             v.set(t1, 200, 25);
             v.set(t2, 200, 25);
             v.move(t1, carDR, 25);
@@ -106,6 +106,7 @@
             ev.stopPropagation();
             keysDown[ev.keyCode] = (ev.type === 'keydown');
         };
+
         document.addEventListener('keydown', onKey);
         document.addEventListener('keyup',   onKey);
         window.addEventListener('resize', function() {
@@ -120,10 +121,16 @@
 
 
         var onRender = function(T) {
-
             // time update
             T /= 1000;
             var DT = T - lastT;
+
+
+            // take care of returning from hidden tab (assumes it paused)
+            if (DT > 0.5) {
+                DT = 1 / 60;
+                console.log('returning from hidden tab!');
+            }
 
 
             // input processing
