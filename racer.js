@@ -8,6 +8,7 @@
               window.msRequestAnimationFrame;
 
     var R360 = Math.PI * 2;
+    var R180 = Math.PI;
     var R90  = Math.PI * 0.5;
 
     var sprites = {};
@@ -69,59 +70,86 @@
         var hudD = [400, 50];
         var h = cvs(hudD);
 
-        var RED   = '#F00';
-        var GREEN = '#0F0';
-        var BLUE  = '#00F';
+
+        var t1 = v.zero();
+        var t2 = v.zero();
         var onHudRender = function() {
-            h.c.fillStyle = RED;
-            h.rect(zeroP, hudD, true);
+            h.rect(zeroP, hudD);
 
             // speed bar
-            h.c.fillStyle = BLUE;
-            h.rect([50, 12.25], [carSpd * 0.25, 25], true);
+            h.c.fillStyle = carSpd > 0 ? '#060' : '#600';
+            h.rect([60, 12.25], [carSpd * 0.25, 25], true);
 
             // direction wheel
             h.c.lineWidth = 4;
-            h.c.strokeStyle = GREEN;
+            h.c.strokeStyle = '#666';
             h.circle([200, 25], 25-2, true);
-            // TODO
+            
+            v.set(t1, 200, 25);
+            v.set(t2, 200, 25);
+            v.move(t1, carDR, 25);
+            v.move(t2, carDR - R180, 25);
+            h.line(t1, t2);
+
+            v.set(t1, 200, 25);
+            v.move(t1, carDR + R90, 25);
+            h.line(t1, [200, 25]);
+
             h.c.lineWidth = 1;
         };
+
+
         onHudRender();
 
         var onKey = function(ev) {
             ev.preventDefault();
             ev.stopPropagation();
-            switch (ev.keyCode) {
-                case 38:  carSpd += 50; break; // up
-                case 40:  carSpd -= 50; break; // down
-                case 39:  carDR += Math.PI / 8; break; // left
-                case 37:  carDR -= Math.PI / 8; break; // right
-                default:
-                    //return console.log(ev.keyCode);
+            keysDown[ev.keyCode] = (ev.type === 'keydown');
+        };
+        document.addEventListener('keydown', onKey);
+        document.addEventListener('keyup',   onKey);
+        window.addEventListener('resize', function() {
+            v.set(screenD, window.innerWidth, window.innerHeight);
+            c.resize(screenD);
+        });
+
+        var t = v.zero();
+        var lastT = -1 / 60;
+        var dSpd = 10;
+        var dR = Math.PI / 60;
+
+
+        var onRender = function(T) {
+
+            // time update
+            T /= 1000;
+            var DT = T - lastT;
+
+
+            // input processing
+            var hudNeedsRepaint = false;
+            if (keysDown['38']) { // up
+                carSpd += dSpd; hudNeedsRepaint = true;
+            }
+            else if (keysDown['40']) { // down
+                carSpd -= dSpd; hudNeedsRepaint = true;
             }
 
+            if (keysDown['39']) { // left
+                carDR += dR; hudNeedsRepaint = true;
+            }
+            else if (keysDown['37']) { // right
+                carDR -= dR; hudNeedsRepaint = true;
+            }
+
+
+            // keep valid limits
             carSpd = v.inLimit(carSpd, -200, 400);
             var t = R90;
             carDR = v.inLimit(carDR, -t, t);
 
-            onHudRender();
-            //console.log('DR:', carDR, 'Spd:', carSpd);
-        };
-        document.addEventListener('keydown', onKey);
 
-        var t = v.zero();
-        var lastT = -1 / 60;
-        var onRender = function(T) {
-            T /= 1000;
-            var DT = T - lastT;
-
-            c.rect(zeroP, screenD);
-
-            c.drawSprite(carS, carD, carP, carR + R90);
-
-            c.blit(h.e, zeroP);
-
+            // move
             if (carDR !== 0) {
                 carR += carDR * DT * carSpd*0.01;
                 //console.log('R:', carR);
@@ -133,6 +161,19 @@
                 //console.log('P:', carP);
             }
 
+
+            if (hudNeedsRepaint) {
+                onHudRender();
+            }
+
+
+            // main paint
+            c.rect(zeroP, screenD);
+            c.drawSprite(carS, carD, carP, carR + R90);
+            c.blit(h.e, zeroP);
+
+
+            // setup for next frame
             lastT = T;
             raf(onRender);
         };

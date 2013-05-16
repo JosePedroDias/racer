@@ -38,7 +38,6 @@
             },
 
             line: function(p0, p1) {
-                ctx.lineWidth = lWidth || 1;
                 ctx.beginPath();
                 ctx.moveTo(p0[0], p0[1]);
                 ctx.lineTo(p1[0], p1[1]);
@@ -59,6 +58,11 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(txt, pos[0], pos[1]);
+            },
+
+            resize: function(dims) {
+                el.setAttribute('width',  dims[0]);
+                el.setAttribute('height', dims[1]);
             },
 
             //  dPos
